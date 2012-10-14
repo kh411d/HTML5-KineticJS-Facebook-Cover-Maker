@@ -1,0 +1,375 @@
+<!DOCTYPE HTML>
+<html>
+  <head>
+    <style>
+      body {
+        margin: 0px;
+        padding: 0px;
+      }
+      canvas {
+        border: 1px solid #9C9898;
+      }
+    </style>
+    <script src="kinetic-v4.0.2.min.js"></script>
+    <script>
+
+
+
+      function update(group, activeAnchor) {
+        var topLeft = group.get(".topLeft")[0];
+        var topRight = group.get(".topRight")[0];
+        var bottomRight = group.get(".bottomRight")[0];
+        var bottomLeft = group.get(".bottomLeft")[0];
+        var deletebtn = group.get(".deleteBtn")[0];
+        var rotatebtn = group.get(".rotateBtn")[0];
+        var image = group.get(".image")[0];
+
+        // update anchor positions
+        switch (activeAnchor.getName()) {
+          case "topLeft":
+            topRight.attrs.y = activeAnchor.attrs.y;
+            bottomLeft.attrs.x = activeAnchor.attrs.x;
+            break;
+          case "topRight":
+            topLeft.attrs.y = activeAnchor.attrs.y;
+            bottomRight.attrs.x = activeAnchor.attrs.x;
+            break;
+          case "bottomRight":
+            bottomLeft.attrs.y = activeAnchor.attrs.y;
+            topRight.attrs.x = activeAnchor.attrs.x;
+            break;
+          case "bottomLeft":
+            bottomRight.attrs.y = activeAnchor.attrs.y;
+            topLeft.attrs.x = activeAnchor.attrs.x;
+            break;
+
+        }
+
+        image.setPosition(topLeft.attrs.x, topLeft.attrs.y);
+
+
+        var width = topRight.attrs.x - topLeft.attrs.x;
+        var height = bottomLeft.attrs.y - topLeft.attrs.y;
+
+        deletebtn.setPosition(bottomLeft.attrs.x + (width/5),bottomLeft.attrs.y);
+        rotatebtn.setPosition(topLeft.attrs.x + (width/2), topLeft.attrs.y + (height/2));
+        group.setOffset(topLeft.attrs.x + (width/2),topLeft.attrs.y + (height/2));
+        
+       
+        if(width && height) {
+          image.setSize(width, height);
+        }
+      }
+
+      function addAnchor(group, x, y, name) {
+        var stage = group.getStage();
+        var layer = group.getLayer();
+
+        var anchor = new Kinetic.Circle({
+          x: x,
+          y: y,
+          stroke: "#666",
+          fill: "#ddd",
+          strokeWidth: 2,
+          radius: 8,
+          name: name,
+          draggable: true
+        });
+
+        anchor.on("dragmove", function() {
+          update(group, this);
+          layer.draw();
+        });
+        anchor.on("mousedown touchstart", function() {
+          group.setDraggable(false);
+          this.moveToTop();
+        });
+        anchor.on("dragend", function() {
+          group.setDraggable(true);
+          layer.draw();
+        });
+        // add hover styling
+        anchor.on("mouseover", function() {
+          var layer = this.getLayer();
+          document.body.style.cursor = "pointer";
+          this.setStrokeWidth(4);
+          layer.draw();
+        });
+        anchor.on("mouseout", function() {
+          var layer = this.getLayer();
+          document.body.style.cursor = "default";
+          this.setStrokeWidth(2);
+          layer.draw();
+        });
+
+        anchor.hide()
+
+        group.add(anchor);
+      }
+
+      function addRotateAnchor(group, x, y, name) {
+        var stage = group.getStage();
+        var layer = group.getLayer();
+
+        var anchor = new Kinetic.Circle({
+          x: x,
+          y: y,
+          stroke: "#666",
+          fill: "#fff",
+          strokeWidth: 1,
+          radius: 10,
+          name: name,
+          draggable: false
+        });
+
+        // add hover styling
+        anchor.on("mouseover", function() {
+          var layer = this.getLayer();
+          document.body.style.cursor = "pointer";
+          this.setStrokeWidth(2);
+          layer.draw();
+        });
+        anchor.on("mouseout", function() {
+          var layer = this.getLayer();
+          document.body.style.cursor = "default";
+          this.setStrokeWidth(1);
+          layer.draw();
+        });
+
+        anchor.on("click", function() {
+          group.rotate(Math.PI / 4);
+        });
+
+        anchor.hide()
+
+        group.add(anchor);
+
+      }
+
+      function toggleAnchor(group,action){
+        if(action == 'show'){
+          group.get(".topLeft")[0].show();
+          group.get(".topRight")[0].show();
+          group.get(".bottomRight")[0].show();
+          group.get(".bottomLeft")[0].show();
+          group.get(".deleteBtn")[0].show();
+          group.get(".rotateBtn")[0].show();
+        }else if(action == 'hide'){
+          group.get(".topLeft")[0].hide();
+          group.get(".topRight")[0].hide();
+          group.get(".bottomRight")[0].hide();
+          group.get(".bottomLeft")[0].hide();
+          group.get(".deleteBtn")[0].hide();
+          group.get(".rotateBtn")[0].hide();  
+        }
+      }
+
+      function addDelAnchor(group,x,y,name){
+         var stage = group.getStage();
+        var layer = group.getLayer();
+        var anchor = new Kinetic.Text({
+          x: x,
+          y: y,
+          text: '-Remove',
+          fontSize: 10,
+          fontFamily: 'Tahoma',
+          textFill: '#555',
+          fill:'#ddd',
+          padding: 2,
+          stroke:'#000',
+          strokeWidth:'0.5',
+          align: 'center',
+          name:name
+        });
+
+         anchor.on("click", function() {
+          group.off("mouseover");
+          group.off("mouseout");
+          group.off("dragstart");
+          group.removeChildren();
+          
+          
+        });
+
+         // add hover styling
+        anchor.on("mouseover", function() {
+          var layer = this.getLayer();
+          document.body.style.cursor = "pointer";
+          this.setStrokeWidth(1);
+          layer.draw();
+        });
+        anchor.on("mouseout", function() {
+          var layer = this.getLayer();
+          document.body.style.cursor = "default";
+          this.setStrokeWidth(0);
+          layer.draw();
+        });
+
+        anchor.hide();
+
+         
+
+         group.add(anchor);
+
+      }
+
+      function loadImage(name,path,isDraggable) {
+        var imgObj, width, height;
+        imgObj = new Image();
+        imgObj.src = path;
+        imgObj.onload = function() {
+
+          if(name == null){
+            name = 'id' +  Math.floor(Math.random()).toString(5) + (new Date()).getTime();        
+          }
+          
+          if(name != 'cover'){
+             var newSize = adjustImageSize(imgObj,200);
+              width = newSize.width;
+              height = newSize.height;
+           }else{
+              width = imgObj.width;
+              height = imgObj.height;
+           }
+
+            imageGroup[name] = new Kinetic.Group({
+                x: width/2,
+                y: height/2,
+                draggable: isDraggable,
+                offset:[width/2,height/2]
+              });
+              layer.add(imageGroup[name]);
+              stage.add(layer);
+
+              
+
+              var Img = new Kinetic.Image({
+                x: 0,
+                y: 0,
+                image: imgObj,
+                name: "image",
+                width: width,
+                height: height,
+                
+              });
+
+              imageGroup[name].add(Img);
+
+              if(isDraggable){
+                addAnchor(imageGroup[name], 0, 0, "topLeft");
+                addAnchor(imageGroup[name], width, 0, "topRight");
+                addAnchor(imageGroup[name], width, height, "bottomRight");
+                addAnchor(imageGroup[name], 0, height, "bottomLeft");  
+                addRotateAnchor(imageGroup[name], width/2, height/2, "rotateBtn")  
+                addDelAnchor(imageGroup[name], width/5, height, "deleteBtn"); 
+
+                imageGroup[name].on("dragstart", function() {
+                  this.moveToTop();
+                });
+
+                // add anchor toggle
+                imageGroup[name].on("mouseover", function() {
+                   var layer = this.getLayer();
+                  toggleAnchor(this,'show');   
+                  layer.draw()
+
+                });
+
+                imageGroup[name].on("mouseout", function() {
+                   var layer = this.getLayer();
+                  toggleAnchor(this,'hide');   
+                  layer.draw();
+
+                });
+             }else{
+              imageGroup[name].moveToBottom();
+             }
+             stage.draw();
+
+        }
+      }
+
+
+      function adjustImageSize(imgObj,max_side){
+        var max_side = max_side || imgObj.width;
+        var height = imgObj.height;
+        var width = imgObj.width;
+
+        if ( imgObj.width > imgObj.height ) {         
+          var image_ratio = imgObj.width / max_side;
+          width = max_side;
+          height = imgObj.height / image_ratio;
+        } else {
+          var image_ratio = imgObj.height / max_side;
+          height = max_side;
+          width = imgObj.width / image_ratio;
+        }
+
+        return { 'width':width,'height':height }
+      }
+
+      function changeCover(path){
+        imageGroup.cover.removeChildren();
+        loadImage('cover',path,false);
+      }
+
+      function saveCover(){
+         stage.toDataURL({
+              callback: function(dataURL){
+                // do something with the data url
+                window.open(dataURL);
+              },
+              mimeType: 'image/jpeg'
+            });
+      }
+
+
+      window.onload = function() {
+       
+        stage = new Kinetic.Stage({
+                                    container: "container",
+                                    width: 851,
+                                    height: 315
+                                  });
+        layer = new Kinetic.Layer();
+        imageGroup = {};
+
+
+
+        loadImage('cover','http://localhost/html5/platform_cover.jpg',false);
+     
+        
+      };
+
+    </script>
+  </head>
+  <body onmousedown="return false;">
+    <div id="container"></div>
+  <div>
+   <h2>Cover Background</h2> 
+  <div style="float:left"><img onclick="changeCover(this.src);" style="cursor:pointer" width="200px" src="platform_cover.jpg" /></div>
+  <div style="float:left"><img onclick="changeCover(this.src);" style="cursor:pointer" width="200px" src="platform_cover2.jpg" /></div>
+  <div style="float:left"><img onclick="changeCover(this.src);" style="cursor:pointer" width="200px" src="platform_cover3.jpg" /></div>
+  <div style="float:left"><img onclick="changeCover(this.src);" style="cursor:pointer" width="200px" src="platform_cover4.jpg" /></div>
+  <div style="float:left"><img onclick="changeCover(this.src);" style="cursor:pointer" width="200px" src="platform_cover5.jpg" /></div>
+  <div style="float:left"><img onclick="changeCover(this.src);" style="cursor:pointer" width="200px" src="platform_cover6.jpg" /></div>
+  <div style="clear:both;"></div>
+  </div>
+
+  <div>
+    <h2>Your Photos</h2>
+    <div style="float:left"><img onclick="loadImage(null,this.src,true);" style="cursor:pointer" width="100px" src="photo_big1.jpg" /></div>
+  <div style="float:left"><img onclick="loadImage(null,this.src,true);" style="cursor:pointer" width="100px" src="photo_big2.jpg" /></div>
+  <div style="float:left"><img onclick="loadImage(null,this.src,true);" style="cursor:pointer" width="100px" src="photo_big3.jpg" /></div>
+  <div style="float:left"><img onclick="loadImage(null,this.src,true);" style="cursor:pointer" width="100px" src="photo_big4.jpg" /></div>
+  <div style="float:left"><img onclick="loadImage(null,this.src,true);" style="cursor:pointer" width="100px" src="photo_big5.jpg" /></div>
+  <div style="float:left"><img onclick="loadImage(null,this.src,true);" style="cursor:pointer" width="100px" src="photo_big6.jpg" /></div>
+ <div style="clear:both;"></div>
+   
+  </div>
+  <div>
+    <h2>Now Save Your Cover!</h2>
+    <button onclick="saveCover();">Save Cover (Open in new Window!)</button>
+  </div>
+  </body>
+</html>
