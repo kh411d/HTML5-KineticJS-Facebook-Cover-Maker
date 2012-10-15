@@ -15,14 +15,12 @@
  *	http://www.gnu.org/copyleft/gpl.html
  */
 
- function Fbcover(canvasWidth,canvasHeight,covers){
+ function Fbcover(canvasWidth,canvasHeight){
    this.canvasWidth = canvasWidth || 851;
    this.canvasHeight = canvasHeight || 315;
    this.imageGroup = {};
    this.stage = new Kinetic.Stage({ container: "container", width: this.canvasWidth, height: this.canvasHeight });
-   this.layer = new Kinetic.Layer();
-   this.loadImage('cover','http://localhost/HTML5-KineticJS-Facebook-Cover-Maker/platform_cover.jpg',false);  
-    
+   this.layer = new Kinetic.Layer();  
  }
 
  Fbcover.prototype = {
@@ -305,7 +303,7 @@
 
       },
 
-    'adjustImageSize': function (imgObj,max_side){
+    'adjustImageSize' : function (imgObj,max_side){
         var max_side = max_side || imgObj.width;
         var height = imgObj.height;
         var width = imgObj.width;
@@ -323,12 +321,14 @@
         return { 'width':width,'height':height }
       },
 
-    'changeCover':  function (path){
+    'changeCover' :  function (path){
+      if(this.imageGroup.cover){
         this.imageGroup.cover.removeChildren();
+      }
         this.loadImage('cover',path,false);
       },
 
-    'saveCover':  function(){
+    'saveCover' :  function(e){
          this.stage.toDataURL({
               callback: function(dataURL){
                 // do something with the data url
@@ -336,7 +336,7 @@
               },
               mimeType: 'image/jpeg'
             });
-      } 
+      },
 
 
  }
